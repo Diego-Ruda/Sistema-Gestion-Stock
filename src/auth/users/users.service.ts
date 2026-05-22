@@ -1,6 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -25,11 +26,12 @@ export class UsersService {
         'Este email ya está registrado en el sistema',
       );
     }
-
+    //El encriptado
+    const hashedPassword = await bcrypt.hash(password, 10);
     // Creamos la instancia del nuevo usuario
     const newUser = this.userRepository.create({
       email,
-      password,
+      password: hashedPassword,
       role,
     });
 
