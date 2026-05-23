@@ -1,26 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+  ) {}
+
+  async create(createCategoryDto: CreateCategoryDto) {
+    const { name } = createCategoryDto;
+
+    // Pasamos el nombre a mayúsculas para evitar duplicados tipo "bebidas" y "Bebidas"
+    const normalizedName = name.trim().toUpperCase();
+
+    const existingCategory = await this.categoryRepository.findOne({
+      where: { name: normalizedName },
+    });
+
+    if (existingCategory) {
+      throw new ConflictException(
+        `La categoría "${name}" ya existe en el sistema`,
+      );
+    }
+
+    const newCategory = this.categoryRepository.create({
+      name: normalizedName,
+    });
+
+    return await this.categoryRepository.save(newCategory);
   }
 
-  findAll() {
-    return `This action returns all categories`;
+  async findAll() {
+    return await this.categoryRepository.find({
+      where: { isActive: true }, // Solo traemos las categorías activas
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
-  }
-
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    if (!category) {
+      throw new NotFoundException(
+        `La categoría con ID ${id} no fue encontrada`,
+      );
+    }
+    return category;
   }
 }
