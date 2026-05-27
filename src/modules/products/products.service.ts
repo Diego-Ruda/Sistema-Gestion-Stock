@@ -73,4 +73,22 @@ export class ProductsService {
       message: `El producto "${product.name}" fue dado de baja (desactivado) correctamente`,
     };
   }
+
+  async activate(id: string) {
+    // 1 Buscamos el producto en el DB
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) {
+      throw new NotFoundException(`El producto con ID ${id} no existe`);
+    }
+
+    // 2 cambiamossu estado en true
+    product.isActive = true;
+
+    // 3 guardamos el producto con el estado
+    await this.productRepository.save(product);
+
+    return {
+      message: `El producto "${product.name}" fue dado de alta (activo) correctamente`,
+    };
+  }
 }
