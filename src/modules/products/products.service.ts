@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -90,5 +91,19 @@ export class ProductsService {
     return {
       message: `El producto "${product.name}" fue dado de alta (activo) correctamente`,
     };
+  }
+
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    // 1 Buscando el producto si existe en la DB
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) {
+      throw new NotFoundException(`El prodcuto con la ID ${id} no existe`);
+    }
+
+    // 2 Fusionamos los cambios que vamos a mandar
+    const updatedProduct = Object.assign(product, updateProductDto);
+
+    // 3 Guardamos los cambios en la DB
+    return await this.productRepository.save(updatedProduct);
   }
 }
