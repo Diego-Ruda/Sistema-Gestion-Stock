@@ -57,4 +57,20 @@ export class ProductsService {
     }
     return product;
   }
+  async remove(id: string) {
+    // 1 Buscamos el producto en el DB
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) {
+      throw new NotFoundException(`El producto con ID ${id} no existe`);
+    }
+    // 2 Cambiamos su estado a false
+    product.isActive = false;
+
+    // 3 Guardamos el producto con el estado
+    await this.productRepository.save(product);
+
+    return {
+      message: `El producto "${product.name}" fue dado de baja (desactivado) correctamente`,
+    };
+  }
 }
